@@ -1,18 +1,27 @@
 from fastapi import FastAPI
+from backend.schemas import AnxietyRequest, AnxietyResponse
+from backend.model_loader import model, tokenizer, device
 import torch
 
-from schemas import AnxietyRequest, AnxietyResponse
-from model_loader import model, tokenizer, device
+app = FastAPI()
 
-app = FastAPI(title="AI Exam Anxiety Detector API")
+# Anxiety labels
+labels = {
+    0: "Low Anxiety",
+    1: "Moderate Anxiety",
+    2: "High Anxiety"
+}
 
+@app.get("/")
+def home():
+    return {"message": "AI Exam Anxiety Detector API Running"}
 
 @app.post("/predict", response_model=AnxietyResponse)
 def predict(data: AnxietyRequest):
 
     text = data.text
 
-    # Tokenize the input text using BERT tokenizer
+    # Tokenize input text
     inputs = tokenizer(
         text,
         return_tensors="pt",
@@ -21,22 +30,14 @@ def predict(data: AnxietyRequest):
         max_length=128
     )
 
-    inputs = {key: value.to(device) for key, value in inputs.items()}
+    inputs = {k: v.to(device) for k, v in inputs.items()}
 
-    # Run model inference
+    # Model prediction
     with torch.no_grad():
         outputs = model(**inputs)
-
-    prediction = torch.argmax(outputs.logits, dim=1).item()
-
-    # Convert prediction to human-readable category
-    labels = {
-        0: "Low Anxiety",
-        1: "Moderate Anxiety",
-        2: "High Anxiety"
-    }
+        prediction = torch.argmax(outputs.logits, dim=1).item()
 
     return {
-        "predicted_level": prediction,
+        "anxiety_level": prediction,
         "anxiety_category": labels[prediction]
     }

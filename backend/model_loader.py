@@ -1,27 +1,23 @@
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
 
-MODEL_PATH = "bert_anxiety_model.pt"
-
-# Use CPU for inference
+# Disable GPU (use CPU)
 device = torch.device("cpu")
 
 # Load tokenizer
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
-# Load BERT model
-model = BertForSequenceClassification.from_pretrained(
-    "bert-base-uncased",
-    num_labels=3
-)
+# Load model
+model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)
 
-# Load trained weights
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+# Load trained weights (if available)
+try:
+    model.load_state_dict(torch.load("model/bert_anxiety_model.pt", map_location=device))
+except:
+    print("Warning: Trained model file not found, using base BERT model")
+
+# Set model to evaluation mode
+model.eval()
 
 # Move model to CPU
 model.to(device)
-
-# Set evaluation mode
-model.eval()
-
-print("BERT Anxiety Model Loaded Successfully")
