@@ -1,32 +1,27 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from schemas import AnxietyRequest, AnxietyResponse
 
 app = FastAPI()
 
-class TextInput(BaseModel):
-    text: str
 
-
-@app.get("/")
-def home():
-    return {"message": "AI Exam Anxiety Detector Backend Running"}
-
-
-@app.post("/predict")
-def predict(data: TextInput):
+@app.post("/predict", response_model=AnxietyResponse)
+def predict(data: AnxietyRequest):
 
     text = data.text.lower()
 
-    if "nervous" in text or "panic" in text or "scared" in text:
-        anxiety = "High Anxiety"
+    if "nervous" in text or "panic" in text:
+        level = 2
+        category = "High Anxiety"
 
-    elif "worried" in text or "stress" in text:
-        anxiety = "Moderate Anxiety"
+    elif "stress" in text or "worried" in text:
+        level = 1
+        category = "Moderate Anxiety"
 
     else:
-        anxiety = "Low Anxiety"
+        level = 0
+        category = "Low Anxiety"
 
     return {
-        "input_text": text,
-        "predicted_anxiety_level": anxiety
+        "predicted_level": level,
+        "anxiety_category": category
     }
